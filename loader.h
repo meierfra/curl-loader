@@ -45,6 +45,8 @@ struct batch_context;
 struct stat_point;
 struct timer_node;
 
+typedef _Bool bool;
+
 /*---------  Common loading functions ----------------*/
 
 int test_environment (struct batch_context* bctx);
@@ -120,7 +122,7 @@ int response_logfiles_set (struct client_context* cctx, struct url_context* url)
 ********************************************************************************/
 int add_secondary_ip_to_device (const char*const device,
                                 const char*const ip_slash_mask, 
-                                char* scope);
+                                char* scope, bool add);
 
 /*******************************************************************************
 * Function name - add_secondary_ip_addrs
@@ -138,7 +140,7 @@ int add_secondary_ip_addrs (const char*const interface,
                             int addr_number, 
                             const char**const addresses,
                             int netmask,
-                            char* scope);
+                            char* scope, bool add);
 
 /*******************************************************************************
 * Function name - parse_config_file

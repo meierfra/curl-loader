@@ -72,6 +72,8 @@ struct idxmap
 
 static struct idxmap *idxmap[16];
 
+typedef _Bool bool;
+
 
 /*
 Interface address.
@@ -147,7 +149,7 @@ typedef struct
 ********************************************************************************/
 int add_secondary_ip_to_device(const char*const device, 
                                const char*const ip_slash_mask,
-                               char* scope) 
+                               char* scope, bool add) 
 {
   request req;
 
@@ -168,7 +170,7 @@ int add_secondary_ip_to_device(const char*const device,
 
   req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
   req.n.nlmsg_flags = NLM_F_REQUEST;
-  req.n.nlmsg_type = RTM_NEWADDR;
+  req.n.nlmsg_type = add ? RTM_NEWADDR : RTM_DELADDR;
   req.ifa.ifa_family = AF_UNSPEC;
 
   get_prefix(&lcl, (char*)ip_slash_mask, req.ifa.ifa_family);
@@ -890,10 +892,11 @@ int add_secondary_ip_addrs (const char*const interface,
                             int addr_number, 
                             const char**const addresses, 
                             int netmask,
-                            char* addr_scope)
+                            char* addr_scope, bool add)
 {
   char ip_slash_mask_buffer[64];
   int j = 0, rval_set_ip = -1;
+  const char *action = add ? "added" : "deleted";
 
   for (j = 0; j < addr_number && addresses[j] ; j++)
     {
@@ -906,7 +909,7 @@ int add_secondary_ip_addrs (const char*const interface,
             
       rval_set_ip = add_secondary_ip_to_device (interface, 
                                                 ip_slash_mask_buffer,
-                                                addr_scope);
+                                                addr_scope, add);
 
       switch (rval_set_ip)
         {
@@ -924,8 +927,8 @@ int add_secondary_ip_addrs (const char*const interface,
 
         case 0:
         default:
-          fprintf (stderr, "%s - successfully added %s IP-address.\n", 
-                   __func__,  ip_slash_mask_buffer);
+          fprintf (stderr, "%s - successfully %s %s IP-address.\n", 
+                   __func__, action, ip_slash_mask_buffer);
           break;
         }
     }

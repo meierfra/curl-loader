@@ -598,6 +598,12 @@ void dump_snapshot_interval_and_advance_total_statistics (batch_context* bctx,
     {
       dump_final_statistics (bctx->cctx_array);
       screen_release ();
+
+      if (create_ip_addrs (bctx, 1, 0) == -1)
+      {
+          fprintf (stderr, "%s - error: create_ip_addrs () remove secondary ip addresses failed. \n", __func__);
+      }
+
       exit (1); 
     }
 

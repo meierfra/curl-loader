@@ -69,7 +69,7 @@ static size_t do_nothing_write_func (void *ptr,
                               size_t nmemb, 
                               void *stream);
 
-static int create_ip_addrs (batch_context* bctx, int bctx_num);
+int create_ip_addrs (batch_context* bctx, int bctx_num, bool add);
 
 static void* batch_function (void *batch_data);
 static int initial_handles_init (struct client_context*const cdata);
@@ -179,7 +179,7 @@ main (int argc, char *argv [])
      Add ip-addresses to the loading network interfaces
      and keep them in batch-contexts. 
   */
-  if (create_ip_addrs (bc_arr, batches_num) == -1)
+  if (create_ip_addrs (bc_arr, batches_num, 1) == -1)
     {
       fprintf (stderr, "%s - error: create_ip_addrs () failed. \n", __func__);
       return -1;
@@ -1730,7 +1730,7 @@ static void free_url (url_context* url, int clients_max)
 *               bctx_num    - number of batch contexts in <bctx_array>
 * Return Code/Output - None
 *******************************************************************************/
-static int create_ip_addrs (batch_context* bctx_array, int bctx_num)
+int create_ip_addrs (batch_context* bctx_array, int bctx_num, bool add)
 {
   int batch_index, client_index; /* Batch and client indexes */
   char*** ip_addresses =0;
@@ -1790,7 +1790,7 @@ static int create_ip_addrs (batch_context* bctx_array, int bctx_num)
                                   bctx->client_num_max, 
                                   (const char** const) ip_addresses[batch_index], 
                                   bctx->cidr_netmask,
-                                  bctx->scope) == -1)
+                                  bctx->scope, add) == -1)
         {
           fprintf (stderr, 
                    "%s - error: add_secondary_ip_addrs() - failed for batch = %d\n", 
