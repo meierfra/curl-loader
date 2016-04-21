@@ -158,7 +158,7 @@ $(LIBCURL):
 	--without-libidn \
 	--without-libssh2 \
 	--disable-ldap \
-	--disable-ipv6 \
+	--enable-ipv6 \
         --enable-thread \
         --with-random=/dev/urandom \
         --with-ssl=/usr/include/openssl \
