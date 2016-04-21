@@ -12,7 +12,8 @@ CARES_VER:=1.7.5
 CARES_MAKE_DIR=$(CARES_BUILD)/c-ares-$(CARES_VER)
 
 CURL_BUILD=$(BUILD)/curl
-CURL_VER:=7.24.0-20120109
+CURL_INST=$(BUILD)/curl-inst
+CURL_VER:=7.48.0
 
 LIBEVENT_BUILD=$(BUILD)/libevent
 LIBEVENT_VER:=1.4.14b
@@ -148,27 +149,42 @@ $(LIBCARES):
 	cp -pf $(CARES_MAKE_DIR)/lib/libcares.*a ./lib
 
 
-# To enable IPv6 change --disable-ipv6 to --enable-ipv6
-
 $(LIBCURL):
 	cd ./packages; tar jxfv curl-$(CURL_VER).tar.bz2; ln -sf curl-$(CURL_VER) curl; \
 	patch -d curl -p1 < ../patches/curl-trace-info-error.patch
 	mkdir -p $(CURL_BUILD);
-	cd $(CURL_BUILD); ../../packages/curl/configure --prefix=$(CURL_BUILD) \
+	cd $(CURL_BUILD); ../../packages/curl/configure --prefix=$(CURL_INST) \
 	--without-libidn \
+	--without-libmetalink \
+	--without-libpsl \
+	--without-librtmp \
 	--without-libssh2 \
-	--disable-ldap \
+	--enable-http \
+	--enable-ftp \
+	--enable-file \
 	--enable-ipv6 \
-        --enable-thread \
-        --with-random=/dev/urandom \
-        --with-ssl=/usr/include/openssl \
-        --enable-shared=no \
-        --enable-ares=$(CARES_MAKE_DIR) \
-        CFLAGS="$(PROF_FLAG) $(DEBUG_FLAGS) $(OPT_FLAGS) -DCURL_MAX_WRITE_SIZE=4096"
+	--disable-ldap \
+	--disable-ldaps \
+	--disable-rtsp \
+	--disable-dict \
+	--disable-telnet \
+	--disable-tftp \
+	--disable-pop3 \
+	--disable-imap \
+	--disable-smtp \
+	--disable-gopher \
+	--disable-smb \
+	--enable-thread \
+	--with-random=/dev/urandom \
+	--with-ssl=/usr/include/openssl \
+	--enable-shared=no \
+	--enable-ares=$(CARES_MAKE_DIR) \
+	--without-nghttp2 \
+		CFLAGS="$(PROF_FLAG) $(DEBUG_FLAGS) $(OPT_FLAGS) -DCURL_MAX_WRITE_SIZE=4096";
 	make -C $(CURL_BUILD); make -C $(CURL_BUILD)/lib install; make -C $(CURL_BUILD)/include/curl install;
 	mkdir -p ./inc; mkdir -p ./lib
-	cp -a $(CURL_BUILD)/include/curl ./inc/curl
-	cp -pf $(CURL_BUILD)/lib/libcurl.*a ./lib
+	cp -a $(CURL_INST)/include/curl ./inc/
+	cp -pf $(CURL_INST)/lib/libcurl.*a ./lib/
 
 
 # Files types rules
