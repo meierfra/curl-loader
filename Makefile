@@ -2,22 +2,30 @@
 TARGET=curl-loader
 TAGFILE=.tagfile
 
+BASE=$(shell pwd)
 BUILD=$(shell pwd)/build
 
 #
 # Building of DNS asynch resolving c-ares library.
-#
+
+CARES_VER:=1.7.5#
 CARES_BUILD=$(BUILD)/c-ares
-CARES_VER:=1.7.5
 CARES_MAKE_DIR=$(CARES_BUILD)/c-ares-$(CARES_VER)
 
-CURL_BUILD=$(BUILD)/curl
-CURL_INST=$(BUILD)/curl-inst
-CURL_VER:=7.48.0
-
-LIBEVENT_BUILD=$(BUILD)/libevent
 LIBEVENT_VER:=1.4.14b
+LIBEVENT_BUILD=$(BUILD)/libevent
 LIBEVENT_MAKE_DIR=$(LIBEVENT_BUILD)/libevent-$(LIBEVENT_VER)-stable
+
+NGHTTP2_VER=1.9.2
+NGHTTP2_BUILD=$(BUILD)/nghttp2
+NGHTTP2_MAKE_DIR=$(NGHTTP2_BUILD)/nghttp2-$(NGHTTP2_VER)
+NGHTTP2_INST_DIR=$(NGHTTP2_BUILD)/nghttp2-$(NGHTTP2_VER)-inst
+
+CURL_VER:=7.48.0
+CURL_BUILD=$(BUILD)/curl
+CURL_MAKE_DIR=$(CURL_BUILD)/curl-$(CURL_VER)
+CURL_INST_DIR=$(CURL_BUILD)/curl-$(CURL_VER)-inst
+
 
 OBJ_DIR:=obj
 SRC_SUFFIX:=c
@@ -81,13 +89,14 @@ LD=gcc
 LDFLAGS=-L./lib -L$(OPENSSLDIR)/lib
 
 # Link Libraries. In some cases, plese add -lidn, or -lldap
-LIBS= -lcurl -levent -lz -lssl -lcrypto -lcares -ldl -lpthread -lnsl -lrt -lresolv
+LIBS= -lcurl -lnghttp2 -levent -lz -lssl -lcrypto -lcares -ldl -lpthread -lnsl -lrt -lresolv
 
 # Include directories
 INCDIR=-I. -I./inc -I$(OPENSSLDIR)/include
 
 # Targets
 LIBCARES:=./lib/libcares.a
+LIBNGHTTP2:=./lib/libnghttp2.a
 LIBCURL:=./lib/libcurl.a
 LIBEVENT:=./lib/libevent.a
 
@@ -99,19 +108,16 @@ MANDIR=/usr/share/man
 
 all: $(TARGET)
 
-$(TARGET): $(LIBCARES) $(LIBCURL) $(LIBEVENT)  $(CONF_OBJ) $(OBJ)
+$(TARGET): $(OBJ)
 	$(LD) $(PROF_FLAG) $(DEBUG_FLAGS) $(OPT_FLAGS) -o $@ $(OBJ) $(LDFLAGS) $(LIBS)
 
-nobuildcurl: $(OBJ)
-	$(LD) $(PROF_FLAG) $(DEBUG_FLAGS) $(OPT_FLAGS) -o $(TARGET) $(OBJ) $(LIBS)
 
 clean:
 	rm -f $(OBJ_DIR)/*.o $(TARGET) core*
 
 cleanall: clean
-	rm -rf ./build ./packages/curl-$(CURL_VER) \
-	./packages/curl ./inc ./lib ./bin $(TAGFILE) \
-	./packages/c-ares-$(CARES_VER) \
+	rm -rf ./build \
+	./inc ./lib ./bin $(TAGFILE) \
 	*.log *.txt *.ctx *~ ./conf-examples/*~
 
 tags:
@@ -149,11 +155,29 @@ $(LIBCARES):
 	cp -pf $(CARES_MAKE_DIR)/lib/libcares.*a ./lib
 
 
-$(LIBCURL):
-	cd ./packages; tar jxfv curl-$(CURL_VER).tar.bz2; ln -sf curl-$(CURL_VER) curl; \
-	patch -d curl -p1 < ../patches/curl-trace-info-error.patch
-	mkdir -p $(CURL_BUILD);
-	cd $(CURL_BUILD); ../../packages/curl/configure --prefix=$(CURL_INST) \
+$(LIBNGHTTP2):
+	mkdir -p $(NGHTTP2_BUILD)
+	cd $(NGHTTP2_BUILD); tar jxf ../../packages/nghttp2-$(NGHTTP2_VER).tar.bz2;
+	cd $(NGHTTP2_MAKE_DIR); ./configure --prefix=$(NGHTTP2_INST_DIR) \
+		--enable-lib-only \
+		--without-libxml2 \
+		--without-spdylay \
+		--with-boost=no \
+		--enable-shared=no \
+			CFLAGS="$(PROF_FLAG) $(DEBUG_FLAGS) $(OPT_FLAGS)";
+	make -C $(NGHTTP2_MAKE_DIR); make -C $(NGHTTP2_MAKE_DIR) install
+	cd $(BASE)
+	mkdir -p ./inc; mkdir -p ./lib
+	cp -a $(NGHTTP2_INST_DIR)/include/nghttp2 ./inc/
+	cp -pf $(NGHTTP2_INST_DIR)/lib/libnghttp2.*a ./lib
+
+
+$(LIBCURL): $(LIBCARES) $(LIBNGHTTP2)
+	mkdir -p $(CURL_BUILD)
+	cd $(CURL_BUILD); tar jxf ../../packages/curl-$(CURL_VER).tar.bz2;
+	echo $(CURL_MAKE_DIR)
+	cd $(CURL_MAKE_DIR); patch -p1 < $(BASE)/patches/curl-trace-info-error.patch
+	cd $(CURL_MAKE_DIR); ./configure --prefix=$(CURL_INST_DIR) \
 	--without-libidn \
 	--without-libmetalink \
 	--without-libpsl \
@@ -179,12 +203,12 @@ $(LIBCURL):
 	--with-ssl=/usr/include/openssl \
 	--enable-shared=no \
 	--enable-ares=$(CARES_MAKE_DIR) \
-	--without-nghttp2 \
+	--with-nghttp2=$(NGHTTP2_INST_DIR) \
 		CFLAGS="$(PROF_FLAG) $(DEBUG_FLAGS) $(OPT_FLAGS) -DCURL_MAX_WRITE_SIZE=4096";
-	make -C $(CURL_BUILD); make -C $(CURL_BUILD)/lib install; make -C $(CURL_BUILD)/include/curl install;
+	make -C $(CURL_MAKE_DIR); make -C $(CURL_MAKE_DIR)/lib install; make -C $(CURL_MAKE_DIR)/include/curl install;
 	mkdir -p ./inc; mkdir -p ./lib
-	cp -a $(CURL_INST)/include/curl ./inc/
-	cp -pf $(CURL_INST)/lib/libcurl.*a ./lib/
+	cp -a $(CURL_INST_DIR)/include/curl ./inc/
+	cp -pf $(CURL_INST_DIR)/lib/libcurl.*a ./lib/
 
 
 # Files types rules
@@ -192,6 +216,6 @@ $(LIBCURL):
 
 *.o: *.h
 
-$(OBJ_DIR)/%.o: %.c
+$(OBJ_DIR)/%.o: %.c $(LIBEVENT) $(LIBCURL)
 	$(CC) $(CFLAGS) $(PROF_FLAG) $(OPT_FLAGS) $(DEBUG_FLAGS) $(INCDIR) -c -o $(OBJ_DIR)/$*.o $<
 

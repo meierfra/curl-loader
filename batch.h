@@ -153,6 +153,11 @@ typedef struct batch_context
   */
   int req_rate;
 
+  /*
+    When true, HTTP/2 support will be enabled
+  */
+  long enable_http2;
+
    /* 
       User-agent string to appear in the HTTP 1/1 requests.
   */

@@ -115,6 +115,7 @@ static int user_agent_parser (batch_context*const bctx, char*const value);
 static int urls_num_parser (batch_context*const bctx, char*const value);
 static int dump_opstats_parser (batch_context*const bctx, char*const value);
 static int req_rate_parser (batch_context*const bctx, char*const value);
+static int enable_http2_parser (batch_context*const bctx, char*const value);
 
 /*
  * URL section tag parsers. 
@@ -192,6 +193,7 @@ static const tag_parser_pair tp_map [] =
     {"URLS_NUM", urls_num_parser},
     {"DUMP_OPSTATS", dump_opstats_parser},
     {"REQ_RATE", req_rate_parser},
+    {"HTTP2", enable_http2_parser},
     
 
     /*------------------------ URL SECTION -------------------------------- */
@@ -1000,6 +1002,20 @@ static int req_rate_parser (batch_context*const bctx, char*const value)
     {
         bctx->req_rate = 0;
     }
+    return 0;
+}
+
+static int enable_http2_parser (batch_context*const bctx, char*const value)
+{
+    long boo = atol (value);
+
+    if (boo < 0 || boo > 1)
+    {
+        fprintf(stderr,
+                "%s error: boolean input 0 or 1 is expected\n", __func__);
+        return -1;
+    }
+    bctx->enable_http2 = boo;
     return 0;
 }
 
