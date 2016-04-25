@@ -21,6 +21,11 @@ NGHTTP2_BUILD=$(BUILD)/nghttp2
 NGHTTP2_MAKE_DIR=$(NGHTTP2_BUILD)/nghttp2-$(NGHTTP2_VER)
 NGHTTP2_INST_DIR=$(NGHTTP2_BUILD)/nghttp2-$(NGHTTP2_VER)-inst
 
+OPENSSL_VER=1.0.2g
+OPENSSL_BUILD=$(BUILD)/openssl
+OPENSSL_MAKE_DIR=$(OPENSSL_BUILD)/openssl-$(OPENSSL_VER)
+OPENSSL_INST_DIR=$(OPENSSL_BUILD)/openssl-$(OPENSSL_VER)-inst
+
 CURL_VER:=7.48.0
 CURL_BUILD=$(BUILD)/curl
 CURL_MAKE_DIR=$(CURL_BUILD)/curl-$(CURL_VER)
@@ -31,7 +36,6 @@ OBJ_DIR:=obj
 SRC_SUFFIX:=c
 OBJ:=$(patsubst %.$(SRC_SUFFIX), $(OBJ_DIR)/$(basename %).o, $(wildcard *.$(SRC_SUFFIX)))
 
-OPENSSLDIR=$(shell $(CURDIR)/openssldir.sh)
 
 # C compiler
 CC=gcc
@@ -86,19 +90,21 @@ endif
 LD=gcc
 
 #Linker Flags
-LDFLAGS=-L./lib -L$(OPENSSLDIR)/lib
+LDFLAGS=-L./lib
 
 # Link Libraries. In some cases, plese add -lidn, or -lldap
 LIBS= -lcurl -lnghttp2 -levent -lz -lssl -lcrypto -lcares -ldl -lpthread -lnsl -lrt -lresolv
 
 # Include directories
-INCDIR=-I. -I./inc -I$(OPENSSLDIR)/include
+INCDIR=-I. -I./inc
 
 # Targets
 LIBCARES:=./lib/libcares.a
-LIBNGHTTP2:=./lib/libnghttp2.a
-LIBCURL:=./lib/libcurl.a
 LIBEVENT:=./lib/libevent.a
+LIBNGHTTP2:=./lib/libnghttp2.a
+LIBSSL:=./lib/libssl.a
+LIBCURL:=./lib/libcurl.a
+
 
 # documentation directory
 DOCDIR=/usr/share/doc/curl-loader/
@@ -166,13 +172,22 @@ $(LIBNGHTTP2):
 		--enable-shared=no \
 			CFLAGS="$(PROF_FLAG) $(DEBUG_FLAGS) $(OPT_FLAGS)";
 	make -C $(NGHTTP2_MAKE_DIR); make -C $(NGHTTP2_MAKE_DIR) install
-	cd $(BASE)
 	mkdir -p ./inc; mkdir -p ./lib
 	cp -a $(NGHTTP2_INST_DIR)/include/nghttp2 ./inc/
 	cp -pf $(NGHTTP2_INST_DIR)/lib/libnghttp2.*a ./lib
 
 
-$(LIBCURL): $(LIBCARES) $(LIBNGHTTP2)
+$(LIBSSL):
+	mkdir -p $(OPENSSL_BUILD)
+	cd $(OPENSSL_BUILD); tar zxf ../../packages/openssl-$(OPENSSL_VER).tar.gz;
+	cd $(OPENSSL_MAKE_DIR); ./config threads no-shared no-zlib --openssldir=/ --install_prefix=$(OPENSSL_INST_DIR);
+	make -C $(OPENSSL_MAKE_DIR); make -C $(OPENSSL_MAKE_DIR) install
+	mkdir -p ./inc; mkdir -p ./lib
+	cp -a $(OPENSSL_INST_DIR)/include/openssl ./inc/
+	cp -pf $(OPENSSL_INST_DIR)/lib64/*.a ./lib
+
+
+$(LIBCURL): $(LIBCARES) $(LIBNGHTTP2) $(LIBSSL)
 	mkdir -p $(CURL_BUILD)
 	cd $(CURL_BUILD); tar jxf ../../packages/curl-$(CURL_VER).tar.bz2;
 	echo $(CURL_MAKE_DIR)
@@ -200,9 +215,9 @@ $(LIBCURL): $(LIBCARES) $(LIBNGHTTP2)
 	--disable-smb \
 	--enable-thread \
 	--with-random=/dev/urandom \
-	--with-ssl=/usr/include/openssl \
 	--enable-shared=no \
 	--enable-ares=$(CARES_MAKE_DIR) \
+	--with-ssl=$(OPENSSL_INST_DIR) \
 	--with-nghttp2=$(NGHTTP2_INST_DIR) \
 		CFLAGS="$(PROF_FLAG) $(DEBUG_FLAGS) $(OPT_FLAGS) -DCURL_MAX_WRITE_SIZE=4096";
 	make -C $(CURL_MAKE_DIR); make -C $(CURL_MAKE_DIR)/lib install; make -C $(CURL_MAKE_DIR)/include/curl install;
