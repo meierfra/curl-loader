@@ -2240,7 +2240,9 @@ static int create_thr_subbatches (batch_context *bc_arr, int subbatches_num)
               }
           }
       }
-      
+
+      bc_arr[i].enable_http2 = master.enable_http2;
+
       /* Zero the pointers to be initialized. */
       bc_arr[i].do_client_num_gradual_increase = 
           master.do_client_num_gradual_increase;
