@@ -446,10 +446,6 @@ int user_activity_hyper (client_context* cctx_array)
 
   curl_multi_setopt (bctx->multiple_handle, CURLMOPT_SOCKETDATA, bctx);
 
-  if (bctx->enable_http2)
-    {
-      curl_multi_setopt(bctx->multiple_handle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
-    }
 
   still_running = 1; 
  

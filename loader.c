@@ -392,6 +392,11 @@ static int initial_handles_init (client_context*const ctx_array)
       return -1;
     }
 
+  if (bctx->enable_http2)
+  {
+    curl_multi_setopt(bctx->multiple_handle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
+  }
+
   /* Initialize all CURL handles */
   for (k = 0 ; k < bctx->client_num_max ; k++)
     {
