@@ -392,6 +392,8 @@ static int initial_handles_init (client_context*const ctx_array)
       return -1;
     }
 
+  curl_multi_setopt(bctx->multiple_handle, CURLMOPT_MAXCONNECTS, bctx->client_num_max);
+
   if (bctx->enable_http2)
   {
     curl_multi_setopt(bctx->multiple_handle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
