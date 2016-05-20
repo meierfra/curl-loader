@@ -1,3 +1,10 @@
+version 0.56-mef, develop, https://github.com/meierfra/curl-loader
+
+* Added HTTP/2 support
+* Enabled IPv6 by default
+* Libraries updated (curl and openssl)
+
+
 version 0.56, unstable, January 10 2012, svn 589
 
 * Fixed a linking bug with gcc-4.6. This version
