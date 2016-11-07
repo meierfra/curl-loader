@@ -69,8 +69,6 @@ static size_t do_nothing_write_func (void *ptr,
                               size_t nmemb, 
                               void *stream);
 
-int create_ip_addrs (batch_context* bctx, int bctx_num, bool add);
-
 static void* batch_function (void *batch_data);
 static int initial_handles_init (struct client_context*const cdata);
 static int setup_curl_handle_appl (struct client_context*const cctx,  
@@ -1730,7 +1728,7 @@ static void free_url (url_context* url, int clients_max)
 *               bctx_num    - number of batch contexts in <bctx_array>
 * Return Code/Output - None
 *******************************************************************************/
-int create_ip_addrs (batch_context* bctx_array, int bctx_num, bool add)
+int create_ip_addrs (struct batch_context* bctx_array, int bctx_num, bool add)
 {
   int batch_index, client_index; /* Batch and client indexes */
   char*** ip_addresses =0;

@@ -142,6 +142,18 @@ int add_secondary_ip_addrs (const char*const interface,
                             int netmask,
                             char* scope, bool add);
 
+/*****************************************************************************
+* Function name - create_ip_addrs
+*
+* Description - Adds ip-addresses of batches of loading clients to network adapter/s
+* Input -       *bctx_array - pointer to the array of batch contexts
+*               bctx_num    - number of batch contexts in <bctx_array>
+* Return Code/Output - None
+*******************************************************************************/
+int create_ip_addrs (struct batch_context* bctx,
+		             int bctx_num,
+					 bool add);
+
 /*******************************************************************************
 * Function name - parse_config_file
 *
