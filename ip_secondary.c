@@ -161,7 +161,7 @@ int add_secondary_ip_to_device(const char*const device,
     };
  	
   const char*const d = device; /* e.g. "eth0" */
-  inet_prefix lcl, peer;
+  inet_prefix lcl;
   int  peer_len = 0, local_len = 0;
 
   memset(&req, 0, sizeof(req));
@@ -179,7 +179,6 @@ int add_secondary_ip_to_device(const char*const device,
    
   if (peer_len == 0 && local_len) 
     {
-      peer = lcl;
       addattr_l(&req.n, sizeof(req), IFA_ADDRESS, &lcl.data, lcl.bytelen);
     }
 
@@ -344,7 +343,7 @@ static int rtnl_open(struct rtnl_handle *rth, unsigned subscriptions)
 {
   socklen_t addr_len;
 
-  memset(rth, 0, sizeof(rth)) ;
+  memset(rth, 0, sizeof(*rth)) ;
 
   rth->fd = socket (AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
   if (rth->fd < 0) 
