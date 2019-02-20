@@ -648,6 +648,7 @@ int setup_curl_handle_init (client_context*const cctx, url_context* url)
 
   curl_easy_setopt (handle, CURLOPT_SSL_VERIFYPEER, 0);
   curl_easy_setopt (handle, CURLOPT_SSL_VERIFYHOST, 0);
+  curl_easy_setopt (handle, CURLOPT_CAINFO, "");
     
   /* Set the private pointer to be used by the smooth-mode. */
   curl_easy_setopt (handle, CURLOPT_PRIVATE, cctx);
